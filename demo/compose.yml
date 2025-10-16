@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      - "streamingapp"
+      - "/data"
+      - "--task=task_1"
+    volumes:
+      - ./data:/data
+      - ~/.aws:/root/.aws:ro
+
+  generator:
+    build:
+      context: .
+      dockerfile: script.Dockerfile
+      args:
+        SOURCE: ./scripts/generator.py
+        DESTINATION: generator.py
+    environment:
+      - AWS_DEFAULT_PROFILE=SandboxAdmin
+      - AWS_REGION=us-east-1
+    command:
+      - "python"
+      - "./generator.py"
+      - "/data"
+      - "--num-files=100"
+      - "--events-per-batch=100"
+      - "--batch-delay=1"
+    volumes:
+      - ./data:/data
+      - ~/.aws:/root/.aws:ro
