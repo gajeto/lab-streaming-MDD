@@ -2,7 +2,7 @@ import datetime
 import json
 import pathlib
 import threading
-import queue
+from queue import Queue
 from typing import Any, Iterator
 import time
 import requests
@@ -15,7 +15,7 @@ and yield the computed rate along with the timestamps of the newest and oldest e
 
 def compute(source: str, stop: threading.Event, **_: Any) -> Iterator[domain.Result]:
 
-    q = threading.Queue()
+    q = Queue()
 
     producer_thread = threading.Thread(target=producer, args=(source, q, stop))
     producer_thread.start()
@@ -43,7 +43,7 @@ def compute(source: str, stop: threading.Event, **_: Any) -> Iterator[domain.Res
         
 
 
-def producer (source: str, stop: threading.Event, queue: threading.Queue) -> None:
+def producer (source: str, stop: threading.Event, queue: Any) -> None:
     path = pathlib.Path(source)
     seen = set[str]()
     lock = threading.Lock()

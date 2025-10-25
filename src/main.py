@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.widgets import DataTable, Footer, Header
 
-from . import domain, task_1
+from . import domain, task_1, task_6
 
 
 def main(
@@ -18,6 +18,8 @@ def main(
     match task:
         case "task_1":
             method = task_1.compute
+        case "task_6":
+            method = task_6.compute
         case _:
             raise ValueError(f"Invalid task: {task}")
 
