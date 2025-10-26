@@ -6,16 +6,16 @@ En esta tarea el objetivo era configurar una rutina Spark para aplicar operacion
 
 ### Preparación
 
-Lo primero es referenciar el bucket S3 que contiene los logs para simular el streaming. Si aún no se ha creado,ubicarse en la raíz del repo y enviar:
+Lo primero es referenciar el bucket S3 que contiene los logs para simular el streaming. Este bucket debería ser el mismo donde se están guardando los logs. Si aún no se ha creado, ubicarse en la raíz del repo y enviar:
 ```bash
 python scripts/generator.py test-data-streaming-mdd --is-bucket --num-files 10 --events-per-batch 1000
 ```
-Este bucket es necesario pues en el mismo se creará un folder de *checkpoints/* necesario para guardar resultados intermedios durante la ejecución en EMR.
+Este bucket es necesario pues en el mismo se creará durante la prueba un folder de *checkpoints/* para guardar resultados intermedios durante la ejecución en EMR.
 Para evitar conflictos por reejeuciones de esta tarea, se puede limpiar el folder en el bucket.
 ```bash
 aws s3 rm s3://test-data-streaming-mdd/checkpoints/ --recursive
 ```
-Con el bucket, ya se puede crear el cluster EMR con una configuración terraform. Ubicarse en la raiz del folser */emr-cluster* y aplicar los siguientes comandos:
+Con el bucket listo, ya se puede crear el cluster EMR con una configuración terraform. Ubicarse en la raiz del folser */emr-cluster* y aplicar los siguientes comandos:
 ```bash
 terraform init
 terraform plan
@@ -81,7 +81,7 @@ Para poder ejecutar la tarea de manera distribuida, se hace con Yarn el cual nec
 zip -r /tmp/src.zip src 
 ```
 
-Una vez comprimido, se puede crear un script de prueba temporal que será usado por Yarn. Esta prueba sencilla deja correr el stream de logs durante 90 segundos, imprimiendo los resultados de la tasa de error calculada en una ventana de 10 segundos, con intervalos de lectura de 10 segundos también.
+Una vez comprimido, se puede crear un script de prueba temporal que será usado por Yarn. Esta prueba sencilla deja correr el stream de logs durante 90 segundos, imprimiendo los resultados de la tasa de error calculada en una ventana de 10 segundos, con intervalos de lectura de 30 segundos también.
 
 ```bash
 cat > /tmp/test_task_6_aws.py <<'PY'

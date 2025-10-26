@@ -8,40 +8,42 @@ import time
 import requests
 
 from . import domain
-"""Here we want to compute the rate of unccessful requests over a queue of events.
-We will read events from JSON files in a given directory, process them in batches,
-and yield the computed rate along with the timestamps of the newest and oldest events considered in each batch.
-"""
 
 def compute(source: str, stop: threading.Event, **_: Any) -> Iterator[domain.Result]:
 
     q = Queue()
 
-    producer_thread = threading.Thread(target=producer, args=(source, q, stop))
+    producer_thread = threading.Thread(target=producer, args=(source, stop, q), daemon=True)
     producer_thread.start()
 
-    count = 0
+    events: list[dict] = []
+    count_total = 0
     count_2xx = 0
+
     while not stop.is_set():
         batch = q.get()
-        for e in batch:
-            count += 1
-            message = e["message"]
-            code = message.split(": ")[-1]
-            if code.startswith("2"):
-                count_2xx += 1
-        q.task_done()
-        yield domain.Result(
-            value=count_2xx / count if count > 0 else 0.0,
-            newest_considered=datetime.datetime.fromtimestamp(
-                max(e["timestamp"] for e in batch)
-            ),
-            oldest_considered=datetime.datetime.fromtimestamp(
-                min(e["timestamp"] for e in batch)
-            ),
-        ) 
+        if isinstance(batch, dict):
+            batch = [batch]
         
+        events.extend(batch)
+        for e in batch:
+            count_total += 1
+            msg = e.get('message', '')
+            code = msg.split(': ')[-1] if ': ' in msg else msg
+            if code.startswith('2'):
+                count_2xx += 1
+        
+        newest_ts = max(e['timestamp'] for e in events)
+        oldest_ts = min(e['timestamp'] for e in events)
 
+        yield domain.Result(
+            value=(count_2xx / count_total) if count_total else 0.0,
+            newest_considered=datetime.datetime.fromtimestamp(newest_ts),
+            oldest_considered=datetime.datetime.fromtimestamp(oldest_ts),
+        )
+
+        q.task_done() 
+        
 
 def producer (source: str, stop: threading.Event, queue: Any) -> None:
     path = pathlib.Path(source)
@@ -49,7 +51,7 @@ def producer (source: str, stop: threading.Event, queue: Any) -> None:
     lock = threading.Lock()
 
     while not stop.is_set():
-        for file in path.glob("*.json"):
+        for file in path.glob('*.json'):
 
             if file.name in seen:
                 continue

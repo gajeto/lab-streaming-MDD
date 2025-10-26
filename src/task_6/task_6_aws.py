@@ -1,4 +1,3 @@
-# src/task_spark.py
 from __future__ import annotations
 
 import queue as _q
