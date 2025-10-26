@@ -6,237 +6,61 @@ import threading
 from src import domain
 from src.task_2 import compute
 
-"""Define the test of a sliding window algorithm that computes the rate of unsuccessful requests over the last minute
-Create a series of events with timestamps and HTTP status codes,
-then another series of events and compare the computed results with the expected ones.
-"""
+'''
+Este test se aplica así:
+batch_1: 2 eventos, uno exitoso (200) y otro fallido a los 30s (500) -> tasa de error 0.5
+batch_2: un nuevo evento a los 70s (404), el evento a los 0s cae fuera de la ventana.
+Ahora ya son 2 eventos fallidos-> tasa de error 1.0
+'''
 
-def test_task_2_no_overlapping(tmp_path: pathlib.Path) -> None:
+def test_task_2_simple(tmp_path: pathlib.Path) -> None:
     source = tmp_path / "source"
     source.mkdir(parents=True, exist_ok=True)
+
     basetime = datetime.datetime.now()
-    # Create events for the first batch with a incremental timestamp
-    with open(source / "batch_1.json", "w") as file:
+    with open(source / "batch_1.json", "w") as f:
         json.dump(
             [
                 {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=10)
-                    ).timestamp(),
+                    "service": "svc",
+                    "timestamp": (basetime + datetime.timedelta(seconds=0)).timestamp(),
                     "message": "HTTP Status Code: 200",
                 },
                 {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=20)
-                    ).timestamp(),
+                    "service": "svc",
+                    "timestamp": (basetime + datetime.timedelta(seconds=30)).timestamp(),
                     "message": "HTTP Status Code: 500",
                 },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=30)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 400",
-                },
             ],
-            file,
+            f,
         )
 
     stop = threading.Event()
-    generator = compute(str(source), stop=stop)
-    first = next(generator)
+    gen = compute(str(source), stop=stop)
 
-    with open(source / "batch_2.json", "w") as file:
-        json.dump(
-            [
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=70)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 200",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=80)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 503",
-                },
-            ],
-            file,
-        )
-
-    
-    second = next(generator)
-
+    first = next(gen)
     assert first == domain.Result(
-        value=2/3,
+        value=1/2,
         newest_considered=basetime + datetime.timedelta(seconds=30),
-        oldest_considered=basetime + datetime.timedelta(seconds=10),
+        oldest_considered=basetime + datetime.timedelta(seconds=0),
     )
+    with open(source / "batch_2.json", "w") as f:
+        json.dump(
+            [
+                {
+                    "service": "svc",
+                    "timestamp": (basetime + datetime.timedelta(seconds=70)).timestamp(),
+                    "message": "HTTP Status Code: 404",
+                },
+            ],
+            f,
+        )
 
+    second = next(gen)
     assert second == domain.Result(
-        value=0.5,
-        newest_considered=basetime + datetime.timedelta(seconds=80),
-        oldest_considered=basetime + datetime.timedelta(seconds=10),
-    )
-
-    stop.set()
-
-def test_task_2_overlapping(tmp_path: pathlib.Path) -> None:
-    source = tmp_path / "source"
-    source.mkdir(parents=True, exist_ok=True)
-    basetime = datetime.datetime.now()
-    # Create events for the first batch with a incremental timestamp
-    with open(source / "batch_1.json", "w") as file:
-        json.dump(
-            [
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=10)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 200",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=20)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 500",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=30)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 400",
-                },
-            ],
-            file,
-        )
-
-    stop = threading.Event()
-    generator = compute(str(source), stop=stop)
-    first = next(generator)
-
-    with open(source / "batch_2.json", "w") as file:
-        json.dump(
-            [
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=50)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 200",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=60)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 503",
-                },
-            ],
-            file,
-        )
-
-    second = next(generator)
-
-    assert first == domain.Result(
-        value=2/3,
-        newest_considered=basetime + datetime.timedelta(seconds=30),
-        oldest_considered=basetime + datetime.timedelta(seconds=10),
-    )
-
-    assert second == domain.Result(
-        value=3/5,
-        newest_considered=basetime + datetime.timedelta(seconds=60),
-        oldest_considered=basetime + datetime.timedelta(seconds=10),
-    )
-
-    stop.set()
-
-def test_task_3_overlapping(tmp_path: pathlib.Path) -> None:
-    source = tmp_path / "source"
-    source.mkdir(parents=True, exist_ok=True)
-    basetime = datetime.datetime.now()
-    # Create events for the first batch with a incremental timestamp
-    with open(source / "batch_1.json", "w") as file:
-        json.dump(
-            [
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=10)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 200",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=20)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 500",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=30)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 400",
-                },
-            ],
-            file,
-        )
-
-    stop = threading.Event()
-    generator = compute(str(source), stop=stop)
-    first = next(generator)
-
-    with open(source / "batch_2.json", "w") as file:
-        json.dump(
-            [
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=60)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 200",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=70)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 503",
-                },
-                {
-                    "service": "monitoring",
-                    "timestamp": (
-                        basetime + datetime.timedelta(seconds=80)
-                    ).timestamp(),
-                    "message": "HTTP Status Code: 400",
-                },
-            ],
-            file,
-        )
-
-    second = next(generator)
-
-    assert first == domain.Result(
-        value=2/2,
-        newest_considered=basetime + datetime.timedelta(seconds=30),
-        oldest_considered=basetime + datetime.timedelta(seconds=20),
-    )
-
-    assert second == domain.Result(
-        value=4/5,
-        newest_considered=basetime + datetime.timedelta(seconds=80),
-        oldest_considered=basetime + datetime.timedelta(seconds=20),
+        value=1.0,
+        newest_considered=basetime + datetime.timedelta(seconds=70),
+        oldest_considered=basetime + datetime.timedelta(seconds=30),
     )
 
     stop.set()

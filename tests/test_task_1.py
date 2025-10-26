@@ -59,7 +59,7 @@ def test_task_1(tmp_path: pathlib.Path) -> None:
     )
 
     assert second == domain.Result(
-        value=2/3,
+        value=(2/3),
         newest_considered=basetime + datetime.timedelta(seconds=144),
         oldest_considered=basetime + datetime.timedelta(seconds=48),
     )
