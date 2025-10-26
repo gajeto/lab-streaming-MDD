@@ -7,7 +7,7 @@ variable "cluster_name" {
 }
 
 variable "release_label" {
-    default = "emr-6.15.0" 
+    default = "emr-7.10.0" 
 }
 
 variable "master_instance_type" {

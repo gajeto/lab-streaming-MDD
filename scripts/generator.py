@@ -51,8 +51,9 @@ class _LocalWriter:
 
 
 class _S3Writer:
-    def __init__(self, path: str):
-        *_, self._bucket, self._prefix = path.split("/", 3)
+    def __init__(self, bucket: str, prefix: str):
+        self._bucket = bucket
+        self._prefix = prefix
         self._s3 = boto3.client("s3")
         self._s3.create_bucket(Bucket=self._bucket)
 
@@ -121,7 +122,7 @@ if __name__ == "__main__":
 
     writer: Writer
     if args.is_bucket:
-        writer = _S3Writer(args.output)
+        writer = _S3Writer(args.output, "source")
     else:
         writer = _LocalWriter(pathlib.Path(args.output))
 
