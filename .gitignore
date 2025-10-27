@@ -10,3 +10,5 @@ __pycache__
 *.txt
 ec2-python-polars/terraform.tfstate
 emr-cluster/terraform.tfstate
+
+*.tar.gz

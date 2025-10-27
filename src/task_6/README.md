@@ -113,7 +113,9 @@ PY
 El script generado en la ruta temporal */tmp/test_task_6_aws.py* ahora puede ser ejecutado con Yarn como master.
 
 ```bash
-spark-submit --master yarn --deploy-mode client --py-files /tmp/src.zip /tmp/test_task_6_aws.py --conf spark.eventLog.enabled=false 
+sudo -u hadoop -i bash -lc '
+  spark-submit --master yarn --deploy-mode client --py-files /tmp/src.zip /tmp/test_task_6_aws.py --conf spark.eventLog.enabled=false 
+'
 ```
 Con esto queda comprobado el cómputo distribuido aplicando operaciones de ventana en Spark.
 
