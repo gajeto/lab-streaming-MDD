@@ -35,7 +35,7 @@ def compute(source: str, stop: threading.Event, **_: Any) -> Iterator[domain.Res
         events.extend(batch)
         if events:
             newest_ts = max(e['timestamp'] for e in events)
-            cutoff = newest_ts - 60 # window of 10 seconds
+            cutoff = newest_ts - 60 # window of 60 seconds
             events = [e for e in events if e['timestamp'] >= cutoff]
 
         if not events:
@@ -48,7 +48,7 @@ def compute(source: str, stop: threading.Event, **_: Any) -> Iterator[domain.Res
         total = len(events)
         unsuccessful = sum(
             1 for e in events
-            if "HTTP Status Code: 200" not in e.get('message', '')
+            if 'HTTP Status Code: 200' not in e.get('message', '')
         )
         value = unsuccessful / total if total else 0.0
 
@@ -65,12 +65,12 @@ def producer(source: str, stop: threading.Event, queue: Queue) -> None:
     seen = set()
     src = pathlib.Path(source)
     while not stop.is_set():
-        for file in sorted(src.glob("*.json")):
+        for file in sorted(src.glob('*.json')):
             if file.name in seen:
                 continue
             seen.add(file.name)
 
-            with open(file, "r") as f:
+            with open(file, 'r') as f:
                 data = json.load(f)
             if isinstance(data, dict):
                 data = [data]

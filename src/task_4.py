@@ -45,7 +45,6 @@ def compute(source: str, stop: threading.Event, **kwargs: Any) -> Iterator[domai
         if batch is None:
             break
 
-        # Normalize -> list of dicts
         if isinstance(batch, dict):
             batch = [batch]
         events: List[Dict] = [

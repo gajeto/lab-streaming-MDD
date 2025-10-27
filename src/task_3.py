@@ -13,7 +13,8 @@ from . import domain
 def compute(source: str, stop: threading.Event, **kwargs: Any) -> Iterator[domain.Result]:
     
     k = int(kwargs.get('k', 64))
-    random.seed(int(42))
+    seed = int(kwargs.get('random_seed', 42))
+    random.seed(int(seed))
 
     q = Queue()
 
