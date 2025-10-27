@@ -13,8 +13,8 @@ from . import domain
 
 def _parse_status_code(msg: str) -> Optional[int]:
     try:
-        if "HTTP Status Code:" in msg:
-            return int(msg.split("HTTP Status Code:")[-1].strip())
+        if 'HTTP Status Code:' in msg:
+            return int(msg.split('HTTP Status Code:')[-1].strip())
     except Exception:
         return None
     return None
@@ -22,7 +22,7 @@ def _parse_status_code(msg: str) -> Optional[int]:
 
 def compute(source: str, stop: threading.Event, **kwargs: Any) -> Iterator[domain.Result]:
     
-    k = 64
+    k = int(kwargs.get('k', 64))
     random.seed(int(42))
 
     q = Queue()
@@ -45,15 +45,15 @@ def compute(source: str, stop: threading.Event, **kwargs: Any) -> Iterator[domai
         if isinstance(batch, dict):
             batch = [batch]
         
-        events = [e for e in batch if isinstance(e, dict) and "timestamp" in e and "message" in e]
+        events = [e for e in batch if isinstance(e, dict) and 'timestamp' in e and 'message' in e]
         if not events and n_seen == 0:
             q.task_done()
             continue
 
         for e in events:
-            ts = float(e["timestamp"])
-            msg = e.get("message", "")
-            code = int(msg.split("HTTP Status Code:")[-1].strip()) if "HTTP Status Code:" in msg else None
+            ts = float(e['timestamp'])
+            msg = e.get('message', '')
+            code = int(msg.split('HTTP Status Code:')[-1].strip()) if 'HTTP Status Code:' in msg else None
             if code is None:
                 min_ts_seen = ts if min_ts_seen is None else min(min_ts_seen, ts)
                 max_ts_seen = ts if max_ts_seen is None else max(max_ts_seen, ts)
@@ -66,17 +66,17 @@ def compute(source: str, stop: threading.Event, **kwargs: Any) -> Iterator[domai
 
             # reservoir sampling
             if len(reservoir) < k:
-                reservoir.append({"code": code, "timestamp": ts})
+                reservoir.append({'code': code, 'timestamp': ts})
                 class_count[code] += 1
             else:
                 j = random.randint(0, n_seen)  # inclusive
                 if j < k:
-                    old_code = reservoir[j]["code"]
+                    old_code = reservoir[j]['code']
                     if old_code in class_count:
                         class_count[old_code] -= 1
                         if class_count[old_code] <= 0:
                             del class_count[old_code]
-                    reservoir[j] = {"code": code, "timestamp": ts}
+                    reservoir[j] = {'code': code, 'timestamp': ts}
                     class_count[code] += 1
 
             n_seen += 1
@@ -105,12 +105,12 @@ def producer(source: str, stop: threading.Event, queue: Queue) -> None:
     src = pathlib.Path(source)
 
     while not stop.is_set():
-        for file in sorted(src.glob("*.json")):
+        for file in sorted(src.glob('*.json')):
             if file.name in seen:
                 continue
             seen.add(file.name)
 
-            with open(file, "r") as f:
+            with open(file, 'r') as f:
                 data = json.load(f)
 
             batch = data if isinstance(data, list) else [data]

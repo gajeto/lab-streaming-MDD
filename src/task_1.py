@@ -45,28 +45,20 @@ def compute(source: str, stop: threading.Event, **_: Any) -> Iterator[domain.Res
         q.task_done() 
         
 
-def producer (source: str, stop: threading.Event, queue: Any) -> None:
-    path = pathlib.Path(source)
-    seen = set[str]()
-    lock = threading.Lock()
+def producer(source: str, stop: threading.Event, queue: Queue) -> None:
+    seen = set()
+    src = pathlib.Path(source)
 
     while not stop.is_set():
-        for file in path.glob('*.json'):
-
+        for file in sorted(src.glob('*.json')):
             if file.name in seen:
                 continue
+            seen.add(file.name)
 
-            with lock:
-                if file.name in seen:
-                    continue
-                seen.add(file.name)
-
-            with open(file) as f:
+            with open(file, 'r') as f:
                 data = json.load(f)
 
-            if isinstance(data, dict):
-                data = [data]
+            batch = data if isinstance(data, list) else [data]
+            queue.put(batch)
 
-            queue.put(data)
-
-        time.sleep(1)  # Avoid busy waiting
+        time.sleep(0.05)
