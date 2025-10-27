@@ -62,7 +62,7 @@ def compute(source: str,
             if stop.is_set() and outbox.empty():
                 break
             try:
-                item = outbox.get(timeout=0.25)  # prevents blocking forever
+                item = outbox.get()  # prevents blocking forever
                 yield item
             except _q.Empty:
                 pass

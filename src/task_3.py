@@ -10,16 +10,6 @@ from typing import Any, Dict, Iterator, List, Optional
 
 from . import domain
 
-
-def _parse_status_code(msg: str) -> Optional[int]:
-    try:
-        if 'HTTP Status Code:' in msg:
-            return int(msg.split('HTTP Status Code:')[-1].strip())
-    except Exception:
-        return None
-    return None
-
-
 def compute(source: str, stop: threading.Event, **kwargs: Any) -> Iterator[domain.Result]:
     
     k = int(kwargs.get('k', 64))

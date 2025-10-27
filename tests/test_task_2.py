@@ -13,23 +13,23 @@ batch_2: un nuevo evento a los 70s (404), el evento a los 0s cae fuera de la ven
 Ahora ya son 2 eventos fallidos-> tasa de error 1.0
 '''
 
-def test_task_2_simple(tmp_path: pathlib.Path) -> None:
-    source = tmp_path / "source"
+def test_task_2(tmp_path: pathlib.Path) -> None:
+    source = tmp_path / 'source'
     source.mkdir(parents=True, exist_ok=True)
 
     basetime = datetime.datetime.now()
-    with open(source / "batch_1.json", "w") as f:
+    with open(source / 'batch_1.json', 'w') as f:
         json.dump(
             [
                 {
-                    "service": "svc",
-                    "timestamp": (basetime + datetime.timedelta(seconds=0)).timestamp(),
-                    "message": "HTTP Status Code: 200",
+                    'service': 'svc',
+                    'timestamp': (basetime + datetime.timedelta(seconds=0)).timestamp(),
+                    'message': 'HTTP Status Code: 200',
                 },
                 {
-                    "service": "svc",
-                    "timestamp": (basetime + datetime.timedelta(seconds=30)).timestamp(),
-                    "message": "HTTP Status Code: 500",
+                    'service': 'svc',
+                    'timestamp': (basetime + datetime.timedelta(seconds=30)).timestamp(),
+                    'message': 'HTTP Status Code: 500',
                 },
             ],
             f,
@@ -44,13 +44,13 @@ def test_task_2_simple(tmp_path: pathlib.Path) -> None:
         newest_considered=basetime + datetime.timedelta(seconds=30),
         oldest_considered=basetime + datetime.timedelta(seconds=0),
     )
-    with open(source / "batch_2.json", "w") as f:
+    with open(source / 'batch_2.json', 'w') as f:
         json.dump(
             [
                 {
-                    "service": "svc",
-                    "timestamp": (basetime + datetime.timedelta(seconds=70)).timestamp(),
-                    "message": "HTTP Status Code: 404",
+                    'service': 'svc',
+                    'timestamp': (basetime + datetime.timedelta(seconds=70)).timestamp(),
+                    'message': 'HTTP Status Code: 404',
                 },
             ],
             f,
